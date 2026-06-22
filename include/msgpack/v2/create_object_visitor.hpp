@@ -115,7 +115,9 @@ public:
         }
         else {
             char* tmp = static_cast<char*>(zone().allocate_align(size, MSGPACK_ZONE_ALIGNOF(char)));
-            std::memcpy(tmp, v, size);
+            // An empty FixStr ("\xa0") reaches here with a null source pointer and zero size;
+            // std::memcpy declares both pointers as nonnull, so guard the copy to avoid undefined behavior.
+            if (size) std::memcpy(tmp, v, size);
             obj->via.str.ptr = tmp;
         }
         obj->via.str.size = size;
@@ -131,7 +133,8 @@ public:
         }
         else {
             char* tmp = static_cast<char*>(zone().allocate_align(size, MSGPACK_ZONE_ALIGNOF(char)));
-            std::memcpy(tmp, v, size);
+            // Guard against a null source pointer with zero size (std::memcpy declares both pointers as nonnull).
+            if (size) std::memcpy(tmp, v, size);
             obj->via.bin.ptr = tmp;
         }
         obj->via.bin.size = size;
@@ -147,7 +150,8 @@ public:
         }
         else {
             char* tmp = static_cast<char*>(zone().allocate_align(size, MSGPACK_ZONE_ALIGNOF(char)));
-            std::memcpy(tmp, v, size);
+            // Guard against a null source pointer with zero size (std::memcpy declares both pointers as nonnull).
+            if (size) std::memcpy(tmp, v, size);
             obj->via.ext.ptr = tmp;
         }
         obj->via.ext.size = static_cast<uint32_t>(size - 1);
